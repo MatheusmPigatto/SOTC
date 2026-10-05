@@ -295,7 +295,46 @@ INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/graph/gp", gsReglistBegin);
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/graph/gp", gsReglistEnd);
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/graph/gp", gsBox);
+extern void gsRegBegin(void);
+extern void gsRegEnd(void);
+extern void iosFTOI4Vector(void *, f32 *);
+
+#define GS_RGBA(c) ((u64)(c)[0] | ((u64)(c)[1] << 8) | ((u64)(c)[2] << 16) | ((u64)(c)[3] << 24) | ((u64)0x3F800000 << 32))
+#define GS_XYZ(x, y) ((u64)((x) + 0x8000) | ((u64)((y) + 0x8000) << 16) | ((u64)0xFFFFFFFF << 32))
+
+// same body as gsReg, but inlined: every caller evaluates the value before testing unk1C
+static inline void gsRegInline(u64 reg, u64 val)
+{
+    if (D_40045AF4->unk1C == 0)
+    {
+        *D_40045AF4->unkC++ = val;
+        *D_40045AF4->unkC++ = reg;
+    }
+}
+
+void gsBox(f32 *arg0, s32 *arg1, s32 *arg2)
+{
+    union
+    {
+        s32 i[4];
+        u_long128 q;
+    } v;
+
+    gsRegBegin();
+    iosFTOI4Vector(&v, arg0);
+    gsRegInline(0, 0x4E);
+    gsRegInline(1, GS_RGBA(arg1));
+    gsRegInline(4, GS_XYZ(v.i[0], v.i[1]));
+    gsRegInline(4, GS_XYZ(v.i[2], v.i[3]));
+    gsRegInline(0, (arg2[3] == 0x80) ? 0xCA : 0x4A);
+    gsRegInline(1, GS_RGBA(arg2));
+    gsRegInline(4, GS_XYZ(v.i[0], v.i[1]));
+    gsRegInline(4, GS_XYZ(v.i[0], v.i[3]));
+    gsRegInline(4, GS_XYZ(v.i[2], v.i[3]));
+    gsRegInline(4, GS_XYZ(v.i[2], v.i[1]));
+    gsRegInline(4, GS_XYZ(v.i[0], v.i[1]));
+    gsRegEnd();
+}
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/graph/gp", gsBox2);
 
